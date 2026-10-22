@@ -1,40 +1,42 @@
 # Architecture and current implementation
 
-SkillStress has a React 18 + TypeScript + Vite client and a Python 3.11+ FastAPI backend. The frontend is under `frontend/src`; the API is under `backend/app`.
+SkillStress is a React 18, TypeScript, and Vite client backed by a Python 3.11+ FastAPI service. The client lives in `frontend/src`; the API and evaluation code live in `backend/app`.
 
 ## Request path
 
 ```text
-Workbench pages
-  └─ WorkbenchContext (browser localStorage state, fetch client)
+Pages
+  └─ WorkbenchContext (API client and local browser fallback)
        └─ Vite /api proxy
-            └─ FastAPI endpoints
-                 ├─ /api/skills       imports and lists skills
-                 ├─ /api/runs         mock preflight, provider runs, repair proposals
-                 └─ /api/provider     Ollama/OpenAI status checks
+            └─ FastAPI
+                 ├─ /api/skills       import, list, edit, and remove skills
+                 ├─ /api/runs         evaluate, list, and compare runs
+                 └─ /api/provider     check OpenAI or Ollama connectivity
 ```
 
-The main UI entry is `frontend/src/main.tsx`, with routes in `frontend/src/App.tsx`. `WorkbenchContext` owns browser-side skills, runs, settings, and repair application. Backend route registration and health are in `backend/app/main.py`.
+The application entry is `frontend/src/main.tsx`; routes are in `frontend/src/App.tsx`. Pages use `WorkbenchContext` for workbench state. The context delegates HTTP operations to typed domain clients in `frontend/src/api`, which share JSON and error handling through `request.ts`. Backend startup and route registration are in `backend/app/main.py`.
 
 ## Evaluation path
 
-`POST /api/runs/execute` accepts a task, skill content, provider, model, and approved obligations. Provider runs make one generation request and a second judge request to the same selected model. OpenAI credentials stay in the backend environment. Ollama requests target the configured local endpoint and must use an installed model. Neither provider receives tools or file access from this application.
+`POST /api/runs/execute` accepts a task, skill text, provider, model, and approved rules. A live run sends the task and skill to the selected provider, then asks the same model to judge the response against each approved rule. The model has no tools or filesystem access through SkillStress. The run stores the answer, judge results, task, provider, model, endpoint, skill version and text, and approved rule IDs.
 
-The judge returns pass/fail, a quote, and a reason for each obligation. A missing/invalid judgment is not silently counted as a pass. The trace records the generated response and raw judge report. This is LLM-as-judge evidence, not independent ground truth. The mock path only performs a labeled preflight and must not be described as behavioral evaluation.
+The judge returns a result and supporting quote for each rule. Missing or invalid judgments fail. This is model-generated evidence, not an independent behavioral test. The mock endpoint runs a small synthetic preflight and is labeled accordingly.
 
-For a comparison rerun, the backend checks provider, model, skill ID, scenario, task prompt, and evaluated obligation IDs against the original in-memory run. The repair flow proposes revised Markdown from a failed run, leaves approval to the user, applies the approved text to the browser workbench copy, then reruns the same task. It does not overwrite a source `SKILL.md` file.
+A repair proposal is based on a failed run and its saved skill snapshot. A person can edit and approve the proposed Markdown; applying it updates the SkillStress copy, not the imported source file. A rerun uses the same task, scenario, provider, model, endpoint, and approved rule IDs. The History page compares the per-rule results and keeps the baseline run visible.
 
-## State and persistence limits
+## Persistence
 
-Runs are held in backend process memory and browser workbench history is saved in localStorage. There is no database, durable run artifact export, or cross-session comparison guarantee. A backend restart loses the baseline required by comparison and repair APIs. Browser history alone cannot restore that backend run. These limits prevent calling the current prototype fully reproducible.
+Skills and runs are stored in SQLite at `backend/data/skillstress.sqlite3` by default. Set `SKILLSTRESS_DB_PATH` to choose a different database file. Runs and their comparison baselines survive backend restarts as long as the same database is used. The browser keeps a local copy for startup and offline display; the API is authoritative when it is reachable.
 
-The interface keeps the workflow to Home, Test, Skills, History, and Settings. A suggested repair can be reviewed from History and rerun against the same task and rules. There is no separate mutation-testing or graph view in the interface.
+The database is local to one backend deployment. It does not synchronize across machines, and there is no export or guaranteed replay bundle. Provider settings are stored in the browser; the OpenAI key belongs in the backend environment.
 
 ## Source map
 
-- `frontend/src/pages`: Home, Test, Skills, History, Settings. Repair review is part of History.
-- `frontend/src/context/WorkbenchContext.tsx`: client state and API calls.
-- `backend/app/api/endpoints`: skills, runs, provider, and placeholder mutation routes.
-- `backend/app/services/provider_runner.py`: provider request, judge, and repair proposal logic.
+- `frontend/src/pages`: Home, Test, Skills, History, and Settings.
+- `frontend/src/context/WorkbenchContext.tsx`: workbench state, local preferences, and page actions.
+- `frontend/src/api`: typed skill, run, provider, and health requests; shared HTTP handling is in `request.ts`.
+- `backend/app/api/endpoints`: skill, run, and provider routes.
+- `backend/app/services/provider_runner.py`: provider requests, same-model judging, and repair proposals.
 - `backend/app/services/evaluator.py`: mock preflight only.
-- `backend/app/services/extractor.py`: candidate obligation extraction.
+- `backend/app/services/extractor.py`: candidate rule extraction from Markdown.
+- `backend/app/services/storage.py`: SQLite persistence.

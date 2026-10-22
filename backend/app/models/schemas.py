@@ -122,21 +122,6 @@ class SkillRepairProposal(BaseModel):
     rationale: str
     supportingEvidence: list[str] = Field(default_factory=list)
 
-class SkillMutation(BaseModel):
-    id: str
-    skillId: str
-    skillName: str
-    targetObligationId: str
-    targetRuleName: str
-    mutationType: Literal["weakened", "removed", "inverted"]
-    originalClause: str
-    mutatedClause: str
-    behaviorChanged: bool
-    regressionDetected: bool
-    detectionConfidence: float
-    deterministicFailureLog: str
-    timestamp: str
-
 class ProviderConfig(BaseModel):
     provider: Literal["openai", "ollama"] = "ollama"
     endpoint: str = "http://localhost:11434"

@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import {
-  Settings as SettingsIcon, Cpu, RotateCcw, Save,
+  Settings as SettingsIcon, Cpu, Save,
   Wifi, WifiOff, Activity, ExternalLink, CheckCircle2, AlertCircle
 } from 'lucide-react';
 import { useWorkbench } from '../context/WorkbenchContext';
 import { Button } from '../components/common/Button';
 
 export const SettingsPage: React.FC = () => {
-  const { settings, updateSettings, testProviderConnection, resetToSampleData } = useWorkbench();
+  const { settings, updateSettings, testProviderConnection } = useWorkbench();
   const [endpoint, setEndpoint] = useState(settings.provider.endpoint);
   const [model, setModel]       = useState(settings.provider.model);
   const [provider, setProvider] = useState(settings.provider.provider);
@@ -231,26 +231,6 @@ export const SettingsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Danger zone */}
-      <div className="glass-panel" style={{
-        padding: '20px',
-        borderColor: 'var(--border-edge)',
-        background: 'var(--bg-surface)'
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px' }}>
-          <div>
-            <h3 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--status-fail)', marginBottom: '3px' }}>
-              Reset Workbench Data
-            </h3>
-            <p style={{ fontSize: '12px', color: 'var(--text-muted)', lineHeight: 1.4 }}>
-          Restore the starter skills and provider preferences. This clears saved run history saved in the current workbench.
-            </p>
-          </div>
-          <Button variant="danger" size="sm" onClick={resetToSampleData} icon={<RotateCcw size={13} />}>
-            Reset All Data
-          </Button>
-        </div>
-      </div>
     </div>
   );
 };

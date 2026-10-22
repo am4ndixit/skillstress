@@ -21,7 +21,6 @@ export const App: React.FC = () => {
             <Route path="history" element={<HistoryPage />} />
             <Route path="runs" element={<Navigate to="/history" replace />} />
             <Route path="traces" element={<Navigate to="/history" replace />} />
-            <Route path="mutation" element={<Navigate to="/history" replace />} />
             <Route path="graphify" element={<Navigate to="/" replace />} />
             <Route path="settings" element={<SettingsPage />} />
             <Route path="*" element={<NotFoundPage />} />

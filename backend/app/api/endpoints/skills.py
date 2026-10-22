@@ -8,7 +8,7 @@ from ...services.storage import delete_skill as delete_saved_skill, get_skill as
 
 router = APIRouter(prefix="/skills", tags=["skills"])
 
-# In-memory registry with sample skills
+# Built-in skills are seeded into SQLite on startup.
 BUILTIN_SKILLS: dict[str, Skill] = {
     "skill-ui-ux-pro-max": Skill(
         id="skill-ui-ux-pro-max",

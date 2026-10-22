@@ -4,7 +4,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from .core.config import settings
 from .api.endpoints.skills import router as skills_router
 from .api.endpoints.runs import router as runs_router
-from .api.endpoints.mutations import router as mutations_router
 from .api.endpoints.provider import router as provider_router
 from .api.endpoints.skills import seed_builtin_skills
 from .services.storage import initialize_storage
@@ -35,7 +34,6 @@ app.add_middleware(
 # Mount endpoints
 app.include_router(skills_router, prefix=settings.API_PREFIX)
 app.include_router(runs_router, prefix=settings.API_PREFIX)
-app.include_router(mutations_router, prefix=settings.API_PREFIX)
 app.include_router(provider_router, prefix=settings.API_PREFIX)
 
 @app.get("/api/health", tags=["health"])
